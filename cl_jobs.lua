@@ -1,28 +1,54 @@
 local Config = lib.require('config')
 
+local currentDutyStatus = false
+
 local function showMultijob()
-    local PlayerData = QBCore.Functions.GetPlayerData()
-    local dutyStatus = PlayerData.job.onduty and 'On Duty' or 'Off Duty'
-    local dutyIcon = PlayerData.job.onduty and 'fa-solid fa-toggle-on' or 'fa-solid fa-toggle-off'
-    local colorIcon = PlayerData.job.onduty and '#5ff5b4' or 'red'
+    local PlayerData = ESX.GetPlayerData()
+    local myJobs = lib.callback.await('randol_multijob:server:myJobs', false)
+    
+    currentDutyStatus = false
+    if myJobs then
+        for _, job in ipairs(myJobs) do
+            if job.job == PlayerData.job.name then
+                currentDutyStatus = job.onduty or false
+                break
+            end
+        end
+    end
+    
     local jobMenu = {
         id = 'job_menu',
         title = 'My Jobs',
-        options = {
-            {
+        options = {},
+    }
+    
+    if Config.EnableDutySystem then
+        local canGoOnDuty = false
+        for _, job in ipairs(Config.DutyJobs) do
+            if job == PlayerData.job.name then
+                canGoOnDuty = true
+                break
+            end
+        end
+        
+        if canGoOnDuty then
+            local dutyStatus = currentDutyStatus and 'On Duty' or 'Off Duty'
+            local dutyIcon = currentDutyStatus and 'fa-solid fa-toggle-on' or 'fa-solid fa-toggle-off'
+            local colorIcon = currentDutyStatus and '#5ff5b4' or 'red'
+            
+            jobMenu.options[#jobMenu.options + 1] = {
                 title = 'Toggle Duty',
                 description = 'Current Status: ' .. dutyStatus,
                 icon = dutyIcon,
                 iconColor = colorIcon,
                 onSelect = function()
-                    TriggerServerEvent('QBCore:ToggleDuty')
+                    TriggerServerEvent('randol_multijob:server:toggleDuty')
                     Wait(500)
                     showMultijob()
                 end,
-            },
-        },
-    }
-    local myJobs = lib.callback.await('randol_multijob:server:myJobs', false)
+            }
+        end
+    end
     if myJobs then
         for _, job in ipairs(myJobs) do
             local isDisabled = PlayerData.job.name == job.job
@@ -73,8 +99,16 @@ AddEventHandler('randol_multijob:client:choiceMenu', function(args)
     lib.showContext('choice_menu')
 end)
 
-RegisterNetEvent('QBCore:Client:OnJobUpdate', function(JobInfo)
+RegisterNetEvent('esx:setJob', function(job)
+    local JobInfo = {
+        name = job.name,
+        grade = job.grade
+    }
     TriggerServerEvent('randol_multijob:server:newJob', JobInfo)
+end)
+
+RegisterNetEvent('randol_multijob:client:setDutyStatus', function(onduty)
+    currentDutyStatus = onduty
 end)
 
 lib.addKeybind({

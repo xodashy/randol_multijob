@@ -2,7 +2,10 @@ fx_version 'cerulean'
 game 'gta5'
 
 author 'Randolio'
-description 'Multi Job'
+
+coauthor 'Theo'
+
+description 'Randolio Multi Job for ESX'
 
 shared_scripts { '@ox_lib/init.lua', 'config.lua'}
 

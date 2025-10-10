@@ -1,7 +1,14 @@
-QBCore = exports['qb-core']:GetCoreObject()
+ESX = exports['es_extended']:getSharedObject()
 
 return {
     MaxJobs = 5,
+    EnableDutySystem = true,
+    DutyJobs = {
+        'police',
+        'ambulance',
+        'mechanic',
+        'taxi'
+    },
     JobIcons = {
         ['police'] = 'fa-solid fa-shield',
         ['ambulance'] = 'fa-solid fa-user-doctor',
