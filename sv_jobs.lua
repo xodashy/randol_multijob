@@ -80,22 +80,30 @@ RegisterNetEvent('randol_multijob:server:changeJob', function(job)
     TriggerClientEvent('randol_multijob:client:setDutyStatus', src, onduty)
 end)
 
-RegisterNetEvent('randol_multijob:server:newJob', function(newJob)
+RegisterNetEvent('randol_multijob:server:newJob', function()
     local src = source
     local xPlayer = ESX.GetPlayerFromId(src)
-    local hasJob = false
+    if not xPlayer then return end
+
     local cid = xPlayer.identifier
-    if newJob.name == 'unemployed' then return end
-    local result = MySQL.query.await('SELECT * FROM save_jobs WHERE cid = ? AND job = ?', {cid, newJob.name}) 
+    local jobName = xPlayer.job.name
+    local jobGrade = xPlayer.job.grade
+
+    if jobName == 'unemployed' then return end
+
+    local jobData = ESX.GetJobs()[jobName]
+    if not jobData or not jobData.grades[tostring(jobGrade)] then return end
+
+    local result = MySQL.query.await('SELECT * FROM save_jobs WHERE cid = ? AND job = ?', {cid, jobName})
     if result[1] then
-        MySQL.query.await('UPDATE save_jobs SET grade = ? WHERE job = ? and cid = ?', {newJob.grade, newJob.name, cid})
-        hasJob = true
+        MySQL.query.await('UPDATE save_jobs SET grade = ? WHERE job = ? and cid = ?', {jobGrade, jobName, cid})
         return
     end
-    if not hasJob and GetJobCount(cid) < Config.MaxJobs then 
-        MySQL.insert.await('INSERT INTO save_jobs (cid, job, grade, onduty) VALUE (?, ?, ?, ?)', {cid, newJob.name, newJob.grade, 0})
+
+    if GetJobCount(cid) < Config.MaxJobs then
+        MySQL.insert.await('INSERT INTO save_jobs (cid, job, grade, onduty) VALUE (?, ?, ?, ?)', {cid, jobName, jobGrade, 0})
     else
-        return TriggerClientEvent('esx:showNotification', src, 'You have the max amount of jobs.')
+        TriggerClientEvent('esx:showNotification', src, 'You have the max amount of jobs.')
     end
 end)
 

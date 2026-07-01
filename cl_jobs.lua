@@ -99,12 +99,8 @@ AddEventHandler('randol_multijob:client:choiceMenu', function(args)
     lib.showContext('choice_menu')
 end)
 
-RegisterNetEvent('esx:setJob', function(job)
-    local JobInfo = {
-        name = job.name,
-        grade = job.grade
-    }
-    TriggerServerEvent('randol_multijob:server:newJob', JobInfo)
+RegisterNetEvent('esx:setJob', function()
+    TriggerServerEvent('randol_multijob:server:newJob')
 end)
 
 RegisterNetEvent('randol_multijob:client:setDutyStatus', function(onduty)
